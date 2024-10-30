@@ -18,7 +18,7 @@
   </head>
   <body>
     <div id="unsupported-browser">
-      <p class="bold">You are using an unsupported browser.</p>
+      <p class="bold">You are using an unsupported browser or platform.</p>
       <p>
         WebGPU is still experimental and does not have wide browser support.
       </p>
@@ -31,14 +31,23 @@
         the time of writing. Firefox may have one at the time of reading, in
         which case I recommend it instead.
       </p>
-      <p>Also check out the <a href="https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips">Chrome Dev guide</a> when using Chrome</p>
+      <p>
+        Also check out the
+        <a
+          href="https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips"
+          >Chrome Dev guide</a
+        >
+        when using Chrome
+      </p>
     </div>
     <noscript>
       This website uses WebGPU, which requires JavaScript to operate.
     </noscript>
     <div id="error" class="hidden error"></div>
 
-    <button id="render-me">Render Me</button>
+    <div>
+      <canvas id="result" height="800" width="1200"></canvas>
+    </div>
 
     <script type="module" src="./index.js"></script>
   </body>

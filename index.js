@@ -44,78 +44,104 @@ async function init() {
     code: shader,
   });
 
-  document.getElementById("render-me").addEventListener("click", doStuff);
-}
+  // document.getElementById("render-me").addEventListener("click", doStuff);
 
-async function doStuff() {
-  const output = device.createBuffer({
-    size: 1000,
-    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+  const canvas = document.getElementById("result");
+  const context = canvas.getContext("webgpu");
+  context.configure({
+    device: device,
+    format: navigator.gpu.getPreferredCanvasFormat(),
+    alphaMode: "premultiplied",
   });
-  const stagingBuffer = device.createBuffer({
-    size: 1000,
-    usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST,
-  });
+  const vertices = new Float32Array([
+    // Triangle 1 (Blue)
+    -1,
+    -1,
+    1,
+    -1,
+    1,
+    1,
 
-  const bindGroupLayout = device.createBindGroupLayout({
-    entries: [
-      {
-        binding: 0,
-        visibility: GPUShaderStage.COMPUTE,
-        buffer: {
-          type: "storage",
+    -1, // Triangle 2 (Red)
+    -1,
+    1,
+    1,
+    -1,
+    1,
+  ]);
+
+  const vertexBuffer = device.createBuffer({
+    label: "Vertices",
+    size: vertices.byteLength, // make it big enough to store vertices in
+    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(vertexBuffer, 0, vertices);
+
+  const GRID_SIZE = 4;
+  const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
+  const uniformBuffer = device.createBuffer({
+    label: "Grid uniforms",
+    size: uniformArray.byteLength,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
+
+  const vertexBuffers = [
+    {
+      attributes: [
+        {
+          shaderLocation: 0,
+          offset: 0,
+          format: "float32x2",
         },
-      },
-    ],
-  });
-
-  const bindGroup = device.createBindGroup({
-    layout: bindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: output,
-        },
-      },
-    ],
-  });
-
-  const computePipeline = device.createComputePipeline({
-    layout: device.createPipelineLayout({
-      bindGroupLayouts: [bindGroupLayout],
-    }),
-    compute: {
-      module: shaderModule,
-      entryPoint: "main",
+      ],
+      arrayStride: 8,
+      stepMode: "vertex",
     },
-  });
-
+  ];
+  const pipelineDescriptor = {
+    label: "Render Pipeline",
+    vertex: {
+      module: shaderModule,
+      entryPoint: "vertex_main",
+      buffers: vertexBuffers,
+    },
+    fragment: {
+      module: shaderModule,
+      entryPoint: "fragment_main",
+      targets: [
+        {
+          format: navigator.gpu.getPreferredCanvasFormat(),
+        },
+      ],
+    },
+    primitive: {
+      topology: "triangle-list",
+    },
+    layout: "auto",
+  };
+  const renderPipeline = device.createRenderPipeline(pipelineDescriptor);
   const commandEncoder = device.createCommandEncoder();
-  const passEncoder = commandEncoder.beginComputePass();
-  passEncoder.setPipeline(computePipeline);
-  passEncoder.setBindGroup(0, bindGroup);
-  passEncoder.dispatchWorkgroups(Math.ceil(1000 / 64));
+  const clearColor = { r: 0.0, g: 0.5, b: 1.0, a: 1.0 };
+
+  const renderPassDescriptor = {
+    colorAttachments: [
+      {
+        clearValue: clearColor,
+        loadOp: "clear",
+        storeOp: "store",
+        view: context.getCurrentTexture().createView(),
+      },
+    ],
+  };
+
+  const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+  passEncoder.setPipeline(renderPipeline);
+  passEncoder.setVertexBuffer(0, vertexBuffer);
+  passEncoder.draw(vertices.length / 2);
   passEncoder.end();
-  commandEncoder.copyBufferToBuffer(
-    output,
-    0, // source offset
-    stagingBuffer,
-    0, // destination offest
-    1000
-  );
 
   device.queue.submit([commandEncoder.finish()]);
-
-  await stagingBuffer.mapAsync(
-    GPUMapMode.READ,
-    0, // offset
-    1000 // length
-  );
-  const copyArrayBuffer = stagingBuffer.getMappedRange(0, 1000);
-  const data = copyArrayBuffer.slice();
-  stagingBuffer.unmap();
-  console.log(new Float32Array(data));
 }
 
 init();
