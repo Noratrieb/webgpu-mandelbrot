@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebGPU Mandelbrot</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+      .error {
+        color: red;
+      }
+      .bold {
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unsupported-browser">
+      <p class="bold">You are using an unsupported browser.</p>
+      <p>
+        WebGPU is still experimental and does not have wide browser support.
+      </p>
+      <p>
+        Check out <a href="https://caniuse.com/webgpu">caniuse.com/webgpu</a> to
+        see which browsers support it.
+      </p>
+      <p>
+        I recommend using Chrome, which has working implementation on stable at
+        the time of writing. Firefox may have one at the time of reading, in
+        which case I recommend it instead.
+      </p>
+      <p>Also check out the <a href="https://developer.chrome.com/docs/web-platform/webgpu/troubleshooting-tips">Chrome Dev guide</a> when using Chrome</p>
+    </div>
+    <noscript>
+      This website uses WebGPU, which requires JavaScript to operate.
+    </noscript>
+    <div id="error" class="hidden error"></div>
+
+    <button id="render-me">Render Me</button>
+
+    <script type="module" src="./index.js"></script>
+  </body>
+</html>
